@@ -1,4 +1,5 @@
 #include "NpcStats.h"
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <climits>
@@ -28,6 +29,7 @@ uint32_t NpcStatsEntry::CallsInWindow(uint64_t now_ms, uint64_t windowMs) const 
 NpcStatsTable::NpcStatsTable(size_t capacity)
     : _capacity(capacity), _count(0)
 {
+    assert(capacity <= 0xFFFF && "NpcStatsTable capacity exceeds uint16_t slab-index range");
     _hashSize = NextPow2(capacity * 2);
     if (_hashSize < 8) _hashSize = 8;
     _slab     = (NpcStatsEntry*)std::calloc(_capacity, sizeof(NpcStatsEntry));

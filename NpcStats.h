@@ -27,6 +27,8 @@ class NpcStatsTable {
 public:
     explicit NpcStatsTable(size_t capacity);
     ~NpcStatsTable();
+    NpcStatsTable(const NpcStatsTable&) = delete;
+    NpcStatsTable& operator=(const NpcStatsTable&) = delete;
 
     // Returns entry for formID, allocating if not present. If at capacity,
     // evicts the entry with the smallest last_seen_ms. Updates last_seen_ms.
