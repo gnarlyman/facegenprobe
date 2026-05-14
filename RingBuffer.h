@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <mutex>
+#include <atomic>
 
 namespace StormLog {
 
@@ -22,16 +23,16 @@ public:
     // If out is too small, returns 0 and discards (treated as drop).
     size_t SwapAndCopy(char* out, size_t outCap);
 
-    uint64_t DroppedCount() const { return _dropped; }
+    uint64_t DroppedCount() const { return _dropped.load(std::memory_order_relaxed); }
 
 private:
-    char*       _active;
-    char*       _shadow;
-    size_t      _activeLen;
-    size_t      _shadowLen;
-    size_t      _cap;
-    uint64_t    _dropped;
-    std::mutex  _mu;
+    char*                   _active;
+    char*                   _shadow;
+    size_t                  _activeLen;
+    size_t                  _shadowLen;
+    size_t                  _cap;
+    std::atomic<uint64_t>   _dropped;
+    std::mutex              _mu;
 };
 
 } // namespace StormLog

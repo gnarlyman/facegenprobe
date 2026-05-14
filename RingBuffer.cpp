@@ -19,7 +19,7 @@ RingBuffer::~RingBuffer() {
 bool RingBuffer::Push(const void* data, size_t n) {
     std::lock_guard<std::mutex> g(_mu);
     if (_activeLen + n > _cap) {
-        ++_dropped;
+        _dropped.fetch_add(1, std::memory_order_relaxed);
         return false;
     }
     std::memcpy(_active + _activeLen, data, n);
@@ -41,7 +41,7 @@ size_t RingBuffer::SwapAndCopy(char* out, size_t outCap) {
     }
     if (take > outCap) {
         // Caller can't take this batch; treat as drop. Reset shadow.
-        _dropped += 1;
+        _dropped.fetch_add(1, std::memory_order_relaxed);
         std::lock_guard<std::mutex> g(_mu);
         _shadowLen = 0;
         return 0;
