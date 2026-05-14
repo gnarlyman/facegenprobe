@@ -108,9 +108,11 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CsvWriter.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CsvWriter.h" />
     <ClInclude Include="VersionInfo.h" />
   </ItemGroup>
   <ItemGroup>

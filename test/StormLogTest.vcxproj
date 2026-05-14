@@ -88,10 +88,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\CsvWriter.cpp" />
+    <ClCompile Include="TestCsvWriter.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="TestTimeMs.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\CsvWriter.h" />
     <ClInclude Include="TestFramework.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
