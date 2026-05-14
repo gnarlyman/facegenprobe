@@ -38,3 +38,19 @@ TEST(ring_after_drain_can_push_again) {
     rb.SwapAndCopy(out, sizeof(out));
     ASSERT_TRUE(rb.Push("abc", 3));
 }
+
+TEST(ring_swap_increments_dropped_on_too_small_out_buffer) {
+    RingBuffer rb(1024);
+    rb.Push("hello\n", 6);
+    rb.Push("world\n", 6);
+    uint64_t before = rb.DroppedCount();
+    char tiny[4];
+    size_t n = rb.SwapAndCopy(tiny, sizeof(tiny));
+    ASSERT_EQ(n, 0u);
+    ASSERT_EQ(rb.DroppedCount(), before + 1);
+    // After dropped batch, ring should be drainable again.
+    rb.Push("again\n", 6);
+    char out[64];
+    n = rb.SwapAndCopy(out, sizeof(out));
+    ASSERT_EQ(n, 6u);
+}

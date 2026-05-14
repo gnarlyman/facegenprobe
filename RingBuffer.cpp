@@ -1,4 +1,5 @@
 #include "RingBuffer.h"
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
 
@@ -9,6 +10,7 @@ RingBuffer::RingBuffer(size_t bufferSize)
 {
     _active = (char*)std::malloc(bufferSize);
     _shadow = (char*)std::malloc(bufferSize);
+    assert(_active && _shadow && "RingBuffer malloc failure");
 }
 
 RingBuffer::~RingBuffer() {
@@ -47,6 +49,8 @@ size_t RingBuffer::SwapAndCopy(char* out, size_t outCap) {
         return 0;
     }
     std::memcpy(out, _shadow, take);
+    // Single drain-thread contract: _shadow is only mutated here and in the
+    // overflow branch (which takes the lock). No producer touches _shadow.
     _shadowLen = 0;
     return take;
 }
