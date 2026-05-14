@@ -38,9 +38,25 @@ static const uint32_t kTrackedFormIDs[] = {
     0x00018BA86, 0x00018BA88, 0x00018BA89,  // more vanilla patrols (gap at 87 intentional)
     0x00070106, 0x00070107,                  // VirtueRider + horse
     // MOO transient Imperial Legion (observed storming in CSVs)
-    0x00461B6B, 0x00461B6C, 0x00461B6D, 0x00461B71,  // MOO ILR Recruit
-    0x0048B23A, 0x0048B93B, 0x0048B93C,              // MOO ILR Sergeant
-    0x0048B93D, 0x0048B93E, 0x0048B93F,
+    // Expanded MOO ILR Recruit range — runtime FIDs vary; cover the contiguous
+    // block we've seen plus margin. 0x461B6E was the storm leader 2026-05-14.
+    0x00461B60, 0x00461B61, 0x00461B62, 0x00461B63,
+    0x00461B64, 0x00461B65, 0x00461B66, 0x00461B67,
+    0x00461B68, 0x00461B69, 0x00461B6A, 0x00461B6B,
+    0x00461B6C, 0x00461B6D, 0x00461B6E, 0x00461B6F,
+    0x00461B70, 0x00461B71, 0x00461B72, 0x00461B73,
+    0x00461B74, 0x00461B75, 0x00461B76, 0x00461B77,
+    0x00461B78, 0x00461B79, 0x00461B7A, 0x00461B7B,
+    0x00461B7C, 0x00461B7D, 0x00461B7E, 0x00461B7F,
+    // MOO ILR Sergeant — expanded similarly
+    0x0048B230, 0x0048B231, 0x0048B232, 0x0048B233,
+    0x0048B234, 0x0048B235, 0x0048B236, 0x0048B237,
+    0x0048B238, 0x0048B239, 0x0048B23A, 0x0048B23B,
+    0x0048B23C, 0x0048B23D, 0x0048B23E, 0x0048B23F,
+    0x0048B930, 0x0048B931, 0x0048B932, 0x0048B933,
+    0x0048B934, 0x0048B935, 0x0048B936, 0x0048B937,
+    0x0048B938, 0x0048B939, 0x0048B93A, 0x0048B93B,
+    0x0048B93C, 0x0048B93D, 0x0048B93E, 0x0048B93F,
     // MOO oddballs from Blockhead bad-actor list
     0x006FDF7C,  // Race Toggler template
     0x0062C7B5,  // EasyBanditMeleeFemale04
