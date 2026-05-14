@@ -17,6 +17,7 @@ struct Config {
     int bEnableLayer1;
     int bEnableLayer3a;
     int bEnableLayer3b;
+    int bEnableFlagWatch;
 
     static Config LoadOrDefault(const char* iniPath);
 };

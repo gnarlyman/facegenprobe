@@ -17,6 +17,7 @@ Config Config::LoadOrDefault(const char* iniPath) {
     c.bEnableLayer1            = 1;
     c.bEnableLayer3a           = 1;
     c.bEnableLayer3b           = 1;
+    c.bEnableFlagWatch         = 0;
 
     if (GetFileAttributesA(iniPath) == INVALID_FILE_ATTRIBUTES) return c;
 
@@ -31,6 +32,7 @@ Config Config::LoadOrDefault(const char* iniPath) {
     c.bEnableLayer1            = GetPrivateProfileIntA("Hooks",     "bEnableLayer1",            c.bEnableLayer1,            iniPath);
     c.bEnableLayer3a           = GetPrivateProfileIntA("Hooks",     "bEnableLayer3a",           c.bEnableLayer3a,           iniPath);
     c.bEnableLayer3b           = GetPrivateProfileIntA("Hooks",     "bEnableLayer3b",           c.bEnableLayer3b,           iniPath);
+    c.bEnableFlagWatch         = GetPrivateProfileIntA("Hooks",     "bEnableFlagWatch",         c.bEnableFlagWatch,         iniPath);
 
     return c;
 }

@@ -5,6 +5,7 @@
 #include "Pipeline.h"
 #include "HookL1.h"
 #include "HookL3.h"
+#include "FlagWatch.h"
 #include <windows.h>
 #include <string>
 #include <ctime>
@@ -54,10 +55,15 @@ static void OnPostPostLoad() {
         else
             _MESSAGE("HookL3 installed (3a=%d 3b=%d).", g_cfg.bEnableLayer3a, g_cfg.bEnableLayer3b);
     }
+    if (g_cfg.bEnableFlagWatch) {
+        if (!StormLog::FlagWatch::Install()) _ERROR("FlagWatch install failed");
+        else                                 _MESSAGE("FlagWatch installed.");
+    }
 }
 
 static void OnExitGame() {
     _MESSAGE("StormLog: ExitGame — shutting down pipeline.");
+    StormLog::FlagWatch::Shutdown();
     StormLog::Pipeline::Instance().Shutdown();
 }
 

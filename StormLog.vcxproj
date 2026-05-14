@@ -113,6 +113,7 @@
     <ClCompile Include="ConsoleSurface.cpp" />
     <ClCompile Include="CsvWriter.cpp" />
     <ClCompile Include="DrainThread.cpp" />
+    <ClCompile Include="FlagWatch.cpp" />
     <ClCompile Include="FormIdResolverEngine.cpp" />
     <ClCompile Include="HookL1.cpp" />
     <ClCompile Include="HookL3.cpp" />
@@ -127,6 +128,7 @@
     <ClInclude Include="ConsoleSurface.h" />
     <ClInclude Include="CsvWriter.h" />
     <ClInclude Include="DrainThread.h" />
+    <ClInclude Include="FlagWatch.h" />
     <ClInclude Include="FormIdResolver.h" />
     <ClInclude Include="HookL1.h" />
     <ClInclude Include="HookL3.h" />
