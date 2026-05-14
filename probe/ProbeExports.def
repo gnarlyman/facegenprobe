@@ -1,0 +1,4 @@
+LIBRARY "StormLogProbe"
+EXPORTS
+OBSEPlugin_Query
+OBSEPlugin_Load

@@ -5,6 +5,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StormLog", "StormLog.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StormLogTest", "test\StormLogTest.vcxproj", "{C7B09F68-79F9-4922-BF94-FD1E9CD80861}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StormLogProbe", "probe\StormLogProbe.vcxproj", "{2FEAC46F-CEC1-4C75-ACCC-E0435E8AAA95}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -19,5 +21,9 @@ Global
 		{C7B09F68-79F9-4922-BF94-FD1E9CD80861}.Debug|Win32.Build.0   = Debug|Win32
 		{C7B09F68-79F9-4922-BF94-FD1E9CD80861}.Release|Win32.ActiveCfg = Release|Win32
 		{C7B09F68-79F9-4922-BF94-FD1E9CD80861}.Release|Win32.Build.0   = Release|Win32
+		{2FEAC46F-CEC1-4C75-ACCC-E0435E8AAA95}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2FEAC46F-CEC1-4C75-ACCC-E0435E8AAA95}.Debug|Win32.Build.0   = Debug|Win32
+		{2FEAC46F-CEC1-4C75-ACCC-E0435E8AAA95}.Release|Win32.ActiveCfg = Release|Win32
+		{2FEAC46F-CEC1-4C75-ACCC-E0435E8AAA95}.Release|Win32.Build.0   = Release|Win32
 	EndGlobalSection
 EndGlobal
