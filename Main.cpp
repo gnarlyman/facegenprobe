@@ -1,5 +1,4 @@
 #include "obse/PluginAPI.h"
-#include "obse_common/SafeWrite.h"
 #include "obse/GameAPI.h"
 #include "VersionInfo.h"
 
@@ -56,6 +55,6 @@ bool OBSEPlugin_Load(const OBSEInterface* obse)
     return true;
 }
 
-BOOL WINAPI DllMain(HANDLE, DWORD, LPVOID) { return TRUE; }
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) { return TRUE; }
 
 } // extern "C"
