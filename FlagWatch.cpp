@@ -174,20 +174,32 @@ static void DisarmWatchpointOnAllThreads()
 // ---------------------------------------------------------------------------
 // TESCharacter::Update hook
 // ---------------------------------------------------------------------------
+static volatile LONG g_diag_count = 0;
+
 static void __fastcall Hook_TESCharUpdate(void* refr, void* /*edx*/, uint32_t param)
 {
+#pragma warning(suppress: 4509)
     if (refr && !g_armed.load(std::memory_order_relaxed)) {
-        // FlagWatch tracks by NPC FormID, not REFR FormID.
-        // refr+0x40 = TESActorBase*; npc+0x0C = NPC FormID.
-        // Defensive reads — refr might be a non-actor REFR; tolerate that.
-        void* npc = nullptr;
-        if (!IsBadReadPtr((char*)refr + 0x40, 4)) {
+        uint32_t refrFID = 0;
+        uint32_t npcFID  = 0;
+        void*    npc     = nullptr;
+
+        __try {
+            refrFID = *(uint32_t*)((char*)refr + 0x0C);
             npc = *(void**)((char*)refr + 0x40);
+            if (npc) {
+                npcFID = *(uint32_t*)((char*)npc + 0x0C) & 0x00FFFFFFu;
+            }
+        } __except(EXCEPTION_EXECUTE_HANDLER) {
+            refrFID = 0;
+            npcFID  = 0;
         }
 
-        uint32_t npcFID = 0;
-        if (npc && !IsBadReadPtr((char*)npc + 0x0C, 4)) {
-            npcFID = *(uint32_t*)((char*)npc + 0x0C) & 0x00FFFFFFu;
+        // First 10 fires: log unconditionally so we can see what's coming through.
+        LONG dn = InterlockedIncrement(&g_diag_count);
+        if (dn <= 10) {
+            _MESSAGE("[FlagWatch] DIAG #%ld refr=%p refrFID=%08X npc=%p npcFID=%08X",
+                     dn, refr, refrFID, npc, npcFID);
         }
 
         if (npcFID != 0) {
