@@ -13,6 +13,8 @@ public:
     ~DrainThread();
 
     void Start();
+    // Caller MUST stop producers (no more Push calls) BEFORE invoking Stop().
+    // Any Push that races against Stop's final drain pass may be silently dropped.
     void Stop();
 
 private:

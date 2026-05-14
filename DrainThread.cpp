@@ -33,7 +33,7 @@ void DrainThread::Loop() {
         size_t n = _rb->SwapAndCopy(buf, sizeof(buf));
         if (n > 0) {
             if (!fp) {
-                fp = std::fopen(_outPath.c_str(), "wb");
+                fopen_s(&fp, _outPath.c_str(), "wb");
                 if (fp) std::fputs(CsvWriter::Header(), fp);
             }
             if (fp) {
