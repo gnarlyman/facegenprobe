@@ -28,6 +28,10 @@ const char* CsvWriter::EventTypeStr(CsvEventType e) {
     return "?";
 }
 
+// Per RFC 4180, embedded newlines in quoted fields are preserved as-is — this is
+// legal CSV but line-oriented readers (getline) will split rows. For StormLog's
+// diagnostic CSVs consumed by Python/Excel/pandas, this is acceptable.
+//
 // Write s to out, escaping if it contains , " or newline.
 // Returns number of chars written.
 static size_t EscapeField(const char* s, char* out, size_t cap) {
@@ -58,6 +62,8 @@ static size_t EscapeField(const char* s, char* out, size_t cap) {
 }
 
 size_t CsvWriter::FormatRow(const CsvEvent& e, char* buf, size_t buflen) {
+    // edidEsc 128 = 4x typical Oblivion EDID cap (~32 chars); modEsc 64 covers ESP
+    // filenames + worst-case quote-escaping.
     char edidEsc[128];
     char modEsc[64];
     size_t edidN = EscapeField(e.npc_edid,   edidEsc, sizeof(edidEsc));
