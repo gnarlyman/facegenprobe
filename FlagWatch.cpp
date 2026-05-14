@@ -130,15 +130,17 @@ static void ArmWatchpointOnAllThreads(DWORD target)
     HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
     if (snap == INVALID_HANDLE_VALUE) return;
 
-    DWORD myPid   = GetCurrentProcessId();
-    DWORD skipTid = g_watcher_thread_id; // don't watch our own bg thread
+    DWORD myPid     = GetCurrentProcessId();
+    DWORD skipBgTid   = g_watcher_thread_id;     // don't watch our own bg thread
+    DWORD skipSelfTid = GetCurrentThreadId();    // don't suspend the thread that called us
 
     THREADENTRY32 te;
     te.dwSize = sizeof(te);
     if (Thread32First(snap, &te)) {
         do {
             if (te.th32OwnerProcessID != myPid) continue;
-            if (te.th32ThreadID == skipTid)      continue;
+            if (te.th32ThreadID == skipBgTid)   continue;
+            if (te.th32ThreadID == skipSelfTid) continue;
             ArmWatchpointOnThread(te.th32ThreadID, target);
         } while (Thread32Next(snap, &te));
     }
@@ -175,20 +177,33 @@ static void DisarmWatchpointOnAllThreads()
 static void __fastcall Hook_TESCharUpdate(void* refr, void* /*edx*/, uint32_t param)
 {
     if (refr && !g_armed.load(std::memory_order_relaxed)) {
-        // FormID is at +0x0C; mask to low 24 bits to strip load-order byte.
-        uint32_t refrFID = *(uint32_t*)((char*)refr + 0x0C) & 0x00FFFFFFu;
-
-        bool tracked = false;
-        for (size_t i = 0; i < sizeof(kTrackedFormIDs)/sizeof(kTrackedFormIDs[0]); ++i) {
-            if (refrFID == kTrackedFormIDs[i]) { tracked = true; break; }
+        // FlagWatch tracks by NPC FormID, not REFR FormID.
+        // refr+0x40 = TESActorBase*; npc+0x0C = NPC FormID.
+        // Defensive reads — refr might be a non-actor REFR; tolerate that.
+        void* npc = nullptr;
+        if (!IsBadReadPtr((char*)refr + 0x40, 4)) {
+            npc = *(void**)((char*)refr + 0x40);
         }
 
-        if (tracked) {
-            DWORD target = (DWORD)refr + 0x08;
-            g_armed_target = target;
-            ArmWatchpointOnAllThreads(target);
-            g_armed.store(true, std::memory_order_relaxed);
-            _MESSAGE("[FlagWatch] armed on refr=%08X target=%p", refrFID, (void*)target);
+        uint32_t npcFID = 0;
+        if (npc && !IsBadReadPtr((char*)npc + 0x0C, 4)) {
+            npcFID = *(uint32_t*)((char*)npc + 0x0C) & 0x00FFFFFFu;
+        }
+
+        if (npcFID != 0) {
+            bool tracked = false;
+            for (size_t i = 0; i < sizeof(kTrackedFormIDs)/sizeof(kTrackedFormIDs[0]); ++i) {
+                if (npcFID == kTrackedFormIDs[i]) { tracked = true; break; }
+            }
+
+            if (tracked) {
+                DWORD target = (DWORD)refr + 0x08;
+                g_armed_target = target;
+                ArmWatchpointOnAllThreads(target);
+                g_armed.store(true, std::memory_order_relaxed);
+                _MESSAGE("[FlagWatch] armed on refr=%p npcFID=%08X target=%p",
+                         refr, npcFID, (void*)target);
+            }
         }
     }
 
