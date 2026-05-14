@@ -108,6 +108,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BurstDetector.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="CsvWriter.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -115,6 +116,7 @@
     <ClCompile Include="RingBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BurstDetector.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="CsvWriter.h" />
     <ClInclude Include="NpcStats.h" />

@@ -88,10 +88,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\BurstDetector.cpp" />
     <ClCompile Include="..\Config.cpp" />
     <ClCompile Include="..\CsvWriter.cpp" />
     <ClCompile Include="..\NpcStats.cpp" />
     <ClCompile Include="..\RingBuffer.cpp" />
+    <ClCompile Include="TestBurstDetector.cpp" />
     <ClCompile Include="TestConfig.cpp" />
     <ClCompile Include="TestCsvWriter.cpp" />
     <ClCompile Include="TestMain.cpp" />
@@ -100,6 +102,7 @@
     <ClCompile Include="TestTimeMs.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\BurstDetector.h" />
     <ClInclude Include="..\Config.h" />
     <ClInclude Include="..\CsvWriter.h" />
     <ClInclude Include="..\NpcStats.h" />
