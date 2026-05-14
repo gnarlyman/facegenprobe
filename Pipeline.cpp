@@ -49,71 +49,92 @@ void Pipeline::OnL1(void* npc, void* fgp, uint32_t npcFormID) {
     if (br.isDupe) return;
 
     // Burst boundary or first call. Touch shared map.
-    std::lock_guard<std::mutex> g(_statsMu);
-    bool inserted;
-    NpcStatsEntry* st = _stats->GetOrInsert(npcFormID, now, &inserted);
+    // Declare surface-call captures before the lock scope so they're accessible after.
+    const char* edidCopy         = nullptr;
+    const char* modCopy          = nullptr;
+    uint32_t    cellFid          = 0;
+    uint32_t    inWindowCopy     = 0;
+    uint32_t    totalRetriesCopy = 0;
+    uint32_t    formIdCopy       = npcFormID;
+    bool        shouldSurface    = false;
 
-    // Account: each burst seals N+1 calls (the seed + N dupes), or just 1 if no dupes.
-    // The current call is the *start* of a new burst, so we account the *ended* burst's
-    // stats against its NPC, not the current one.
-    if (br.burstEnded && br.endedNpc != nullptr && br.dupesAtEnd > 0) {
-        // Find or insert the prior NPC's row to attribute the dupes.
-        // For simplicity, we attribute by current FormID if endedNpc == npc (same FormID).
-        // Cross-NPC burst-end attribution requires reverse-lookup, which we skip in v0.1.
-    }
+    {
+        std::lock_guard<std::mutex> g(_statsMu);
+        bool inserted;
+        NpcStatsEntry* st = _stats->GetOrInsert(npcFormID, now, &inserted);
 
-    if (inserted) {
-        // Resolve returns borrowed const char*; copy into st->edid/mod_source buffers.
-        const char* edid = nullptr; const char* mod = nullptr;
-        FormIdResolver::Resolve(npcFormID, &edid, &mod);
-        std::strncpy(st->edid,       edid ? edid : "", sizeof(st->edid) - 1);
-        std::strncpy(st->mod_source, mod  ? mod  : "", sizeof(st->mod_source) - 1);
-        st->edid[sizeof(st->edid) - 1]               = 0;
-        st->mod_source[sizeof(st->mod_source) - 1]   = 0;
+        // Account: each burst seals N+1 calls (the seed + N dupes), or just 1 if no dupes.
+        // The current call is the *start* of a new burst, so we account the *ended* burst's
+        // stats against its NPC, not the current one.
+        if (br.burstEnded && br.endedNpc != nullptr && br.dupesAtEnd > 0) {
+            // Find or insert the prior NPC's row to attribute the dupes.
+            // For simplicity, we attribute by current FormID if endedNpc == npc (same FormID).
+            // Cross-NPC burst-end attribution requires reverse-lookup, which we skip in v0.1.
+        }
 
-        // Emit FIRST_SEEN.
+        if (inserted) {
+            // Resolve returns borrowed const char*; copy into st->edid/mod_source buffers.
+            const char* edid = nullptr; const char* mod = nullptr;
+            FormIdResolver::Resolve(npcFormID, &edid, &mod);
+            strncpy_s(st->edid,       sizeof(st->edid),       edid ? edid : "", _TRUNCATE);
+            strncpy_s(st->mod_source, sizeof(st->mod_source), mod  ? mod  : "", _TRUNCATE);
+
+            // Emit FIRST_SEEN.
+            CsvEvent e{};
+            e.time_ms          = now;
+            e.layer            = CsvLayer::L1;
+            e.event_type       = CsvEventType::FIRST_SEEN;
+            e.npc_formid       = npcFormID;
+            e.npc_edid         = st->edid;
+            e.mod_source       = st->mod_source;
+            e.cell_formid      = FormIdResolver::CurrentCellFormId();
+            e.total_calls_l1   = st->total_l1_calls;
+            e.total_retries_l1 = st->total_l1_retries;
+            e.total_l3         = st->total_l3_dispatch;
+            EmitEvent(e);
+        }
+
+        // Account this call.
+        ++st->total_l1_calls;
+        st->total_l1_retries += br.dupesAtEnd;
+        st->PushRecent(now);
+
+        // 1000 ms = calls-per-second metric for storm-threshold compare;
+        // independent of BurstDetector's iBurstWindowMs (same-tuple dedup).
+        uint32_t inWindow = st->CallsInWindow(now, 1000);
+        if (inWindow > st->max_burst_per_sec) st->max_burst_per_sec = inWindow;
+
+        bool isStorm = (int)inWindow >= _cfg.iBurstThresholdPerSecond;
+
         CsvEvent e{};
         e.time_ms          = now;
         e.layer            = CsvLayer::L1;
-        e.event_type       = CsvEventType::FIRST_SEEN;
+        e.event_type       = isStorm ? CsvEventType::STORM : CsvEventType::BURST_END;
         e.npc_formid       = npcFormID;
         e.npc_edid         = st->edid;
         e.mod_source       = st->mod_source;
         e.cell_formid      = FormIdResolver::CurrentCellFormId();
+        e.burst_count      = br.dupesAtEnd;
+        e.calls_in_window  = inWindow;
         e.total_calls_l1   = st->total_l1_calls;
         e.total_retries_l1 = st->total_l1_retries;
         e.total_l3         = st->total_l3_dispatch;
         EmitEvent(e);
-    }
 
-    // Account this call.
-    ++st->total_l1_calls;
-    st->total_l1_retries += br.dupesAtEnd;
-    st->PushRecent(now);
+        // Capture values needed for surface call while still holding the lock;
+        // slab strings are write-once on insert so pointer capture is safe for v0.1.
+        shouldSurface    = isStorm && _cfg.bConsoleSurface && _surface;
+        edidCopy         = st->edid;
+        modCopy          = st->mod_source;
+        cellFid          = e.cell_formid;
+        inWindowCopy     = inWindow;
+        totalRetriesCopy = st->total_l1_retries;
+    } // _statsMu released here
 
-    uint32_t inWindow = st->CallsInWindow(now, 1000);
-    if (inWindow > st->max_burst_per_sec) st->max_burst_per_sec = inWindow;
-
-    bool isStorm = (int)inWindow >= _cfg.iBurstThresholdPerSecond;
-
-    CsvEvent e{};
-    e.time_ms          = now;
-    e.layer            = CsvLayer::L1;
-    e.event_type       = isStorm ? CsvEventType::STORM : CsvEventType::BURST_END;
-    e.npc_formid       = npcFormID;
-    e.npc_edid         = st->edid;
-    e.mod_source       = st->mod_source;
-    e.cell_formid      = FormIdResolver::CurrentCellFormId();
-    e.burst_count      = br.dupesAtEnd;
-    e.calls_in_window  = inWindow;
-    e.total_calls_l1   = st->total_l1_calls;
-    e.total_retries_l1 = st->total_l1_retries;
-    e.total_l3         = st->total_l3_dispatch;
-    EmitEvent(e);
-
-    if (isStorm && _cfg.bConsoleSurface && _surface) {
-        _surface->MaybePrintStorm(npcFormID, st->edid, st->mod_source,
-            e.cell_formid, inWindow, st->total_l1_retries, now);
+    // Console_Print is an engine callback that may block; call outside the lock.
+    if (shouldSurface) {
+        _surface->MaybePrintStorm(formIdCopy, edidCopy, modCopy,
+            cellFid, inWindowCopy, totalRetriesCopy, now);
     }
 }
 
