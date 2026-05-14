@@ -90,14 +90,17 @@
   <ItemGroup>
     <ClCompile Include="..\CsvWriter.cpp" />
     <ClCompile Include="..\NpcStats.cpp" />
+    <ClCompile Include="..\RingBuffer.cpp" />
     <ClCompile Include="TestCsvWriter.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="TestNpcStats.cpp" />
+    <ClCompile Include="TestRingBuffer.cpp" />
     <ClCompile Include="TestTimeMs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CsvWriter.h" />
     <ClInclude Include="..\NpcStats.h" />
+    <ClInclude Include="..\RingBuffer.h" />
     <ClInclude Include="TestFramework.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
