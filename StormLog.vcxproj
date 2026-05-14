@@ -110,9 +110,11 @@
   <ItemGroup>
     <ClCompile Include="CsvWriter.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="NpcStats.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CsvWriter.h" />
+    <ClInclude Include="NpcStats.h" />
     <ClInclude Include="VersionInfo.h" />
   </ItemGroup>
   <ItemGroup>
