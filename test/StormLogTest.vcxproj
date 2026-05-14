@@ -92,6 +92,7 @@
     <ClCompile Include="..\Config.cpp" />
     <ClCompile Include="..\ConsoleSurface.cpp" />
     <ClCompile Include="..\CsvWriter.cpp" />
+    <ClCompile Include="..\DrainThread.cpp" />
     <ClCompile Include="..\FormIdResolverNull.cpp" />
     <ClCompile Include="..\NpcStats.cpp" />
     <ClCompile Include="..\RingBuffer.cpp" />
@@ -99,6 +100,7 @@
     <ClCompile Include="TestConfig.cpp" />
     <ClCompile Include="TestConsoleSurface.cpp" />
     <ClCompile Include="TestCsvWriter.cpp" />
+    <ClCompile Include="TestDrainThread.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="TestNpcStats.cpp" />
     <ClCompile Include="TestRingBuffer.cpp" />
@@ -109,6 +111,7 @@
     <ClInclude Include="..\Config.h" />
     <ClInclude Include="..\ConsoleSurface.h" />
     <ClInclude Include="..\CsvWriter.h" />
+    <ClInclude Include="..\DrainThread.h" />
     <ClInclude Include="..\FormIdResolver.h" />
     <ClInclude Include="..\NpcStats.h" />
     <ClInclude Include="..\RingBuffer.h" />
