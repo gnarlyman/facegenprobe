@@ -95,6 +95,7 @@
     <ClCompile Include="..\DrainThread.cpp" />
     <ClCompile Include="..\FormIdResolverNull.cpp" />
     <ClCompile Include="..\NpcStats.cpp" />
+    <ClCompile Include="..\Pipeline.cpp" />
     <ClCompile Include="..\RingBuffer.cpp" />
     <ClCompile Include="TestBurstDetector.cpp" />
     <ClCompile Include="TestConfig.cpp" />
@@ -103,6 +104,7 @@
     <ClCompile Include="TestDrainThread.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="TestNpcStats.cpp" />
+    <ClCompile Include="TestPipeline.cpp" />
     <ClCompile Include="TestRingBuffer.cpp" />
     <ClCompile Include="TestTimeMs.cpp" />
   </ItemGroup>
@@ -114,6 +116,7 @@
     <ClInclude Include="..\DrainThread.h" />
     <ClInclude Include="..\FormIdResolver.h" />
     <ClInclude Include="..\NpcStats.h" />
+    <ClInclude Include="..\Pipeline.h" />
     <ClInclude Include="..\RingBuffer.h" />
     <ClInclude Include="TestFramework.h" />
   </ItemGroup>

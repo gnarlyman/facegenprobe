@@ -116,6 +116,7 @@
     <ClCompile Include="FormIdResolverEngine.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="NpcStats.cpp" />
+    <ClCompile Include="Pipeline.cpp" />
     <ClCompile Include="RingBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -126,6 +127,7 @@
     <ClInclude Include="DrainThread.h" />
     <ClInclude Include="FormIdResolver.h" />
     <ClInclude Include="NpcStats.h" />
+    <ClInclude Include="Pipeline.h" />
     <ClInclude Include="RingBuffer.h" />
     <ClInclude Include="VersionInfo.h" />
   </ItemGroup>
