@@ -19,8 +19,9 @@ typedef void (__thiscall *Fn_GetFaceGenHeadParameters)(TESRace* race, TESNPC* np
 static Fn_GetFaceGenHeadParameters s_orig = nullptr;
 
 static void __fastcall HookFn(TESRace* race, void* /*edx*/, TESNPC* npc, void* fgp) {
-    uint32_t formID = npc ? npc->refID : 0;
-    Pipeline::Instance().OnL1(npc, fgp, formID);
+    if (npc && fgp) {
+        Pipeline::Instance().OnL1(npc, fgp, npc->refID);
+    }
     s_orig(race, npc, fgp);
 }
 
