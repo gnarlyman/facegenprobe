@@ -115,6 +115,7 @@
     <ClCompile Include="DrainThread.cpp" />
     <ClCompile Include="FormIdResolverEngine.cpp" />
     <ClCompile Include="HookL1.cpp" />
+    <ClCompile Include="HookL3.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="NpcStats.cpp" />
     <ClCompile Include="Pipeline.cpp" />
@@ -128,6 +129,7 @@
     <ClInclude Include="DrainThread.h" />
     <ClInclude Include="FormIdResolver.h" />
     <ClInclude Include="HookL1.h" />
+    <ClInclude Include="HookL3.h" />
     <ClInclude Include="NpcStats.h" />
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="RingBuffer.h" />
