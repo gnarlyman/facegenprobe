@@ -90,11 +90,13 @@
   <ItemGroup>
     <ClCompile Include="..\BurstDetector.cpp" />
     <ClCompile Include="..\Config.cpp" />
+    <ClCompile Include="..\ConsoleSurface.cpp" />
     <ClCompile Include="..\CsvWriter.cpp" />
     <ClCompile Include="..\NpcStats.cpp" />
     <ClCompile Include="..\RingBuffer.cpp" />
     <ClCompile Include="TestBurstDetector.cpp" />
     <ClCompile Include="TestConfig.cpp" />
+    <ClCompile Include="TestConsoleSurface.cpp" />
     <ClCompile Include="TestCsvWriter.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="TestNpcStats.cpp" />
@@ -104,6 +106,7 @@
   <ItemGroup>
     <ClInclude Include="..\BurstDetector.h" />
     <ClInclude Include="..\Config.h" />
+    <ClInclude Include="..\ConsoleSurface.h" />
     <ClInclude Include="..\CsvWriter.h" />
     <ClInclude Include="..\NpcStats.h" />
     <ClInclude Include="..\RingBuffer.h" />

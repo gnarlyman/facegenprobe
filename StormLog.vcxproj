@@ -110,6 +110,7 @@
   <ItemGroup>
     <ClCompile Include="BurstDetector.cpp" />
     <ClCompile Include="Config.cpp" />
+    <ClCompile Include="ConsoleSurface.cpp" />
     <ClCompile Include="CsvWriter.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="NpcStats.cpp" />
@@ -118,6 +119,7 @@
   <ItemGroup>
     <ClInclude Include="BurstDetector.h" />
     <ClInclude Include="Config.h" />
+    <ClInclude Include="ConsoleSurface.h" />
     <ClInclude Include="CsvWriter.h" />
     <ClInclude Include="NpcStats.h" />
     <ClInclude Include="RingBuffer.h" />
