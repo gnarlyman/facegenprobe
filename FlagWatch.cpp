@@ -29,7 +29,22 @@ namespace FlagWatch {
 // ---------------------------------------------------------------------------
 // Tracked FormIDs (low 24 bits only — strip load-order byte on compare).
 // ---------------------------------------------------------------------------
-static const uint32_t kTrackedFormIDs[] = { 0x000700CC };
+static const uint32_t kTrackedFormIDs[] = {
+    // Vanilla Imperial Legion mounted patrols (Blockhead bad-actor list)
+    0x000700C0, 0x000700C1, 0x000700C2, 0x000700C3,
+    0x000700C4, 0x000700C5, 0x000700C6, 0x000700C7,
+    0x000700C8, 0x000700C9, 0x000700CA, 0x000700CB,
+    0x000700CC, 0x000700CD,
+    0x00018BA86, 0x00018BA88, 0x00018BA89,  // more vanilla patrols (gap at 87 intentional)
+    0x00070106, 0x00070107,                  // VirtueRider + horse
+    // MOO transient Imperial Legion (observed storming in CSVs)
+    0x00461B6B, 0x00461B6C, 0x00461B6D, 0x00461B71,  // MOO ILR Recruit
+    0x0048B23A, 0x0048B93B, 0x0048B93C,              // MOO ILR Sergeant
+    0x0048B93D, 0x0048B93E, 0x0048B93F,
+    // MOO oddballs from Blockhead bad-actor list
+    0x006FDF7C,  // Race Toggler template
+    0x0062C7B5,  // EasyBanditMeleeFemale04
+};
 
 // ---------------------------------------------------------------------------
 // TESCharacter::Update hook
