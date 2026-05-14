@@ -45,6 +45,11 @@ struct TestRegistrar {
 
 #define ASSERT_STREQ(a, b) do {                                 \
     const char* _a = (a); const char* _b = (b);                 \
+    if (!_a || !_b) {                                           \
+        std::fprintf(stderr, "  FAIL: %s:%d: ASSERT_STREQ nullptr arg (a=%p b=%p)\n",\
+            __FILE__, __LINE__, (const void*)_a, (const void*)_b);\
+        std::exit(1);                                           \
+    }                                                           \
     if (std::strcmp(_a, _b) != 0) {                             \
         std::fprintf(stderr, "  FAIL: %s:%d: ASSERT_STREQ\n     got: '%s'\n     exp: '%s'\n",\
             __FILE__, __LINE__, _a, _b);                        \
