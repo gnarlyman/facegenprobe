@@ -358,6 +358,7 @@ bool Install()
     // Install TESCharacter::Update detour.
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
+    void* origBefore = (void*)s_orig_TESCharUpdate;
     DetourAttach(reinterpret_cast<PVOID*>(&s_orig_TESCharUpdate), Hook_TESCharUpdate);
     LONG res = DetourTransactionCommit();
     if (res != NO_ERROR) {
@@ -370,6 +371,9 @@ bool Install()
         g_watcher_thread = nullptr;
         return false;
     }
+
+    _MESSAGE("[FlagWatch] detour: origAddr=%p trampoline=%p hook=%p",
+             origBefore, (void*)s_orig_TESCharUpdate, (void*)&Hook_TESCharUpdate);
 
     return true;
 }
