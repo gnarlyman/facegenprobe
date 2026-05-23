@@ -11,6 +11,8 @@ Config Config::LoadOrDefault(const char* iniPath) {
     c.iFlushIntervalMs         = 1000;
     c.iFlushEveryNEvents       = 100;
     c.iBurstThresholdPerSecond = 5;
+    c.iBurstStormThreshold     = 16;
+    c.iReportIntervalMs        = 5000;
     c.iConsoleCooldownMs       = 5000;
     c.iBurstWindowMs           = 50;
     c.iMaxTrackedNpcs          = 4096;
@@ -26,6 +28,8 @@ Config Config::LoadOrDefault(const char* iniPath) {
     c.iFlushIntervalMs         = GetPrivateProfileIntA("Logging",   "iFlushIntervalMs",         c.iFlushIntervalMs,         iniPath);
     c.iFlushEveryNEvents       = GetPrivateProfileIntA("Logging",   "iFlushEveryNEvents",       c.iFlushEveryNEvents,       iniPath);
     c.iBurstThresholdPerSecond = GetPrivateProfileIntA("Detection", "iBurstThresholdPerSecond", c.iBurstThresholdPerSecond, iniPath);
+    c.iBurstStormThreshold     = GetPrivateProfileIntA("Detection", "iBurstStormThreshold",     c.iBurstStormThreshold,     iniPath);
+    c.iReportIntervalMs        = GetPrivateProfileIntA("Detection", "iReportIntervalMs",        c.iReportIntervalMs,        iniPath);
     c.iConsoleCooldownMs       = GetPrivateProfileIntA("Detection", "iConsoleCooldownMs",       c.iConsoleCooldownMs,       iniPath);
     c.iBurstWindowMs           = GetPrivateProfileIntA("Detection", "iBurstWindowMs",           c.iBurstWindowMs,           iniPath);
     c.iMaxTrackedNpcs          = GetPrivateProfileIntA("Detection", "iMaxTrackedNpcs",          c.iMaxTrackedNpcs,          iniPath);

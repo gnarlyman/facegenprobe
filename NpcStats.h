@@ -14,6 +14,7 @@ struct NpcStatsEntry {
     uint32_t total_l1_retries;
     uint32_t total_l3_dispatch;
     uint32_t max_burst_per_sec;
+    uint32_t retries_at_last_report;   // baseline for periodic-report delta
     uint64_t last_console_ms;
     uint64_t recent_ts[16];
     uint8_t  recent_head;       // next write index
@@ -37,6 +38,10 @@ public:
 
     size_t Size() const { return _count; }
     size_t Capacity() const { return _capacity; }
+
+    // Direct slab access for the periodic reporter. Caller must hold the
+    // same mutex used around GetOrInsert. Entries with formID==0 are free.
+    NpcStatsEntry* SlabData() { return _slab; }
 
 private:
     NpcStatsEntry* _slab;       // owned; _capacity entries

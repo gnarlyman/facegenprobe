@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StormLogTest", "test\StormL
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StormLogProbe", "probe\StormLogProbe.vcxproj", "{2FEAC46F-CEC1-4C75-ACCC-E0435E8AAA95}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FaceGenProbe", "FaceGenProbe\FaceGenProbe.vcxproj", "{C8B31E2E-7A5C-4D05-924B-5EAFA090971C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -25,5 +27,9 @@ Global
 		{2FEAC46F-CEC1-4C75-ACCC-E0435E8AAA95}.Debug|Win32.Build.0   = Debug|Win32
 		{2FEAC46F-CEC1-4C75-ACCC-E0435E8AAA95}.Release|Win32.ActiveCfg = Release|Win32
 		{2FEAC46F-CEC1-4C75-ACCC-E0435E8AAA95}.Release|Win32.Build.0   = Release|Win32
+		{C8B31E2E-7A5C-4D05-924B-5EAFA090971C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C8B31E2E-7A5C-4D05-924B-5EAFA090971C}.Debug|Win32.Build.0   = Debug|Win32
+		{C8B31E2E-7A5C-4D05-924B-5EAFA090971C}.Release|Win32.ActiveCfg = Release|Win32
+		{C8B31E2E-7A5C-4D05-924B-5EAFA090971C}.Release|Win32.Build.0   = Release|Win32
 	EndGlobalSection
 EndGlobal

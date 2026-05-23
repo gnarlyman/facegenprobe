@@ -6,6 +6,7 @@
 #include "HookL1.h"
 #include "HookL3.h"
 #include "FlagWatch.h"
+#include "Log.h"
 #include <windows.h>
 #include <string>
 #include <ctime>
@@ -41,13 +42,20 @@ static std::string MakeSessionCsvPath() {
 
 static void OnPostPostLoad() {
     _MESSAGE("StormLog: PostPostLoad — loading config and installing hooks.");
+    // Open the real-time log file NOW so it exists from game start — you can
+    // confirm logging works without waiting for a (rare) storm.
+    StormLog::Lg::Init();
+    StormLog::Lg::Write("StormLog v%d.%d.%d.%d PostPostLoad — installing hooks",
+        VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, VERSION_BUILD);
     g_cfg     = StormLog::Config::LoadOrDefault("Data\\OBSE\\Plugins\\StormLog.ini");
     g_csvPath = MakeSessionCsvPath();
     StormLog::Pipeline::Instance().Init(g_cfg, g_csvPath.c_str(), &ConsolePrintAdapter);
+    StormLog::Lg::Write("config: reportInterval=%dms burstStorm>=%d callsStorm>=%d/s",
+        g_cfg.iReportIntervalMs, g_cfg.iBurstStormThreshold, g_cfg.iBurstThresholdPerSecond);
 
     if (g_cfg.bEnableLayer1) {
-        if (!StormLog::HookL1::Install()) _ERROR("HookL1 install failed");
-        else                              _MESSAGE("HookL1 installed.");
+        if (!StormLog::HookL1::Install()) { _ERROR("HookL1 install failed"); StormLog::Lg::Write("HookL1 install FAILED"); }
+        else                              { _MESSAGE("HookL1 installed."); StormLog::Lg::Write("HookL1 installed"); }
     }
     if (g_cfg.bEnableLayer3a || g_cfg.bEnableLayer3b) {
         if (!StormLog::HookL3::Install(g_cfg.bEnableLayer3a != 0, g_cfg.bEnableLayer3b != 0))

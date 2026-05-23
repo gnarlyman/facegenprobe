@@ -173,4 +173,19 @@ uint32_t FormIdResolver::CurrentCellFormId()
     return static_cast<uint32_t>(cell->refID);
 }
 
+bool FormIdResolver::PlayerWorldPos(float& x, float& y, float& z, uint32_t& cellFid)
+{
+    if (!s_thePlayer || !*s_thePlayer) return false;
+
+    // PlayerCharacter -> ... -> TESObjectREFR: public posX/posY/posZ at 0x02C.
+    PlayerCharacter* p = *s_thePlayer;
+    x = p->posX;
+    y = p->posY;
+    z = p->posZ;
+
+    TESObjectCELL* cell = p->parentCell;
+    cellFid = cell ? static_cast<uint32_t>(cell->refID) : 0;
+    return true;
+}
+
 } // namespace StormLog

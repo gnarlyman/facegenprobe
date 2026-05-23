@@ -1,59 +1,53 @@
 # FaceGenProbe
 
-Minimal diagnostic probe for investigating the **producer side** of FaceGen storms.
+OBSE plugin that eliminates the FaceGen storm bug for creature-mounted NPCs in Oblivion.
 
-## Purpose
+## The Bug
 
-This probe targets the functions most likely responsible for releasing or falling back on FaceGen data, which appears to be the root trigger for the retry storms on certain NPCs (especially the vanilla Imperial Legion riders `000700C0–CD`).
+NPCs mounted on creatures (e.g., Imperial Legion riders) trigger an infinite FaceGen reprocessing loop — the Filler (~50–100 calls/sec) and associated FaceGen chain run continuously, causing severe performance degradation. The task never completes and stays in the BSTaskManagerThread queue.
 
-### Current Targets (from Ghidra decompilation)
+## Fix (Build 39)
 
-- `FUN_00519d20` → `FaceGen_ReleaseFace0Face1`
-  - Reference-counted release of FaceGen data.
-- `FUN_00521e40` → `FaceGen_FallbackPopulator` / `FaceGen_DefaultGetter`
-  - Fallback logic that runs when normal FaceGen lookup fails.
+Three hooks intercept the storm at different levels:
 
-## Why This Probe Exists
+| Hook | Address | What it does |
+|---|---|---|
+| `TESNPC_FaceGenFiller` | 0x005221C0 | Zeroes race data (+0xE8) for mounted NPCs, forcing the default race FaceGen path |
+| `FUN_0043b990` | 0x0043B990 | Blocks BSTask creation for creature mounts (vtable+0xF4 check) |
+| `FUN_0043eb80` | 0x0043EB80 | 2-call gate — allows init + FaceGen setup, blocks all subsequent storm calls |
 
-The previous L3 hooks (`QueuedHead_Run` and especially `BSTaskThread_Runnable`) were too aggressive and crashed the game on boot because they hooked functions that can be called on partially constructed objects.
+The 2-call gate at `FUN_0043eb80` is the key fix. Mounted NPCs get their first two calls (setup), then all subsequent calls return immediately. The storm still fires (~100/sec) but each call is ~3 pointer dereferences instead of the full FaceGen chain.
 
-This probe is intentionally much more focused and safer.
+Storm self-resolves after ~20k–30k iterations (~200–300 seconds) when the task finally completes.
 
-## Building
+## Build
 
-This probe follows the same build environment as the rest of the StormLog project.
+Requires:
+- **Detours**: `D:\Modlists\_clones\StormLog\Detours\detours.lib` and headers
+- **xOBSE common**: `D:\Modlists\_clones\common\Release\common.lib`
+- **OBSE headers**: `D:\Modlists\_clones\obse\obse\`
+- Visual Studio 2022, Win32 Release
 
-1. It needs the Detours junction already present in the StormLog folder.
-2. It links against `common.lib` (build `xOBSE/common` in Release first if necessary).
-3. Recommended: Add it as a new project in `StormLog.sln` (Win32, same include paths as `StormLogProbe`).
-
-Alternatively, you can build it with a minimal vcxproj modeled after `StormLog/probe/StormLogProbe.vcxproj`.
-
-## Usage
-
-1. Build `FaceGenProbe.dll`.
-2. Create a MO2 mod folder:
-   ```
-   mods/FaceGenProbe/
-       OBSE/Plugins/FaceGenProbe.dll
-   ```
-3. **Disable** the normal `StormLog` mod.
-4. Enable `FaceGenProbe`.
-5. Launch the game.
-
-The probe will write to:
-```
-Stock Game/Data/OBSE/Plugins/FaceGenProbe.log
+```powershell
+# From the FaceGenProbe directory:
+& "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" FaceGenProbe.vcxproj /p:Configuration=Release /p:Platform=Win32 /m /nologo
 ```
 
-## What to Look For
+Or use `build.bat`.
 
-- High call counts to `FaceGen_ReleaseFace0Face1` on storming NPCs.
-- `FaceGen_FallbackPopulator` being hit repeatedly.
-- Correlation between these calls and the L1 storms you're already capturing with the main StormLog.
+## Install
 
-This data should help identify whether the storm is caused by aggressive FaceGen data eviction or broken fallback/retry logic.
+Copy `Release\FaceGenProbe.dll` to `Data\OBSE\Plugins\`. Log writes to `facegenprobe_realtime.log` beside the DLL.
 
----
+## Files
 
-Built as a clean, focused diagnostic tool during the Reborn FaceGen storm investigation (May 2026).
+| File | Purpose |
+|---|---|
+| `FaceGenProbe.cpp` | Main source — all three hooks |
+| `Main.cpp` | OBSE plugin entry point |
+| `FaceGenProbeExports.def` | DLL exports |
+| `FaceGenProbe.vcxproj` | MSBuild project |
+
+## History
+
+Started May 2026 as a diagnostic probe. Evolved through 39 builds — dead-end hooks on PerFrameProcessor, FUN_00529530, FUN_0052c870, HelperPopulator (crashes), mid-function NOP (crashes), crash probes, stack scans — before the `FUN_0043eb80` 2-call gate was confirmed working in Build 38.

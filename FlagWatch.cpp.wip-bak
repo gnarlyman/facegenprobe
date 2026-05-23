@@ -12,7 +12,6 @@
 
 #include "FlagWatch.h"
 #include "Config.h"
-#include "RefMap.h"
 #include "obse/GameAPI.h"
 #include <windows.h>
 #include <tlhelp32.h>
@@ -64,10 +63,13 @@ static const uint32_t kTrackedFormIDs[] = {
 };
 
 // ---------------------------------------------------------------------------
-// TESCharacter::Update hook
+// Character::Set3D hook
 // ---------------------------------------------------------------------------
-typedef void (__fastcall* fn_TESCharUpdate)(void* refr, void* /*edx*/, uint32_t param);
-static fn_TESCharUpdate s_orig_TESCharUpdate = (fn_TESCharUpdate)0x004E0580;
+// Character::Set3D — __thiscall(refr, newModel). xOBSE GameObjects.cpp line 19
+// confirms this address. Fires on every actor model attach/detach including
+// the per-frame Set3D(NULL) cancellation calls that drive the storm.
+typedef void (__fastcall* fn_CharacterSet3D)(void* refr, void* /*edx*/, void* newModel);
+static fn_CharacterSet3D s_orig_CharacterSet3D = (fn_CharacterSet3D)0x0060E430;
 
 // ---------------------------------------------------------------------------
 // Watchpoint state
@@ -180,20 +182,6 @@ static volatile LONG g_diag_count = 0;
 static void __fastcall Hook_TESCharUpdate(void* refr, void* /*edx*/, uint32_t param)
 {
 #pragma warning(suppress: 4509)
-    // Always-on: record base-NPC -> placed-ref so the storm surface can log a
-    // prid-able ref FormID (the L1 FaceGen hook only sees the base TESNPC).
-    // Runs every call, including while armed (storm in progress), unlike the
-    // diagnostic/arm block below which stops once g_armed is set.
-    if (refr) {
-        uint32_t rmRefr = 0, rmNpc = 0; void* rmNpcPtr = nullptr;
-        __try {
-            rmRefr = *(uint32_t*)((char*)refr + 0x0C);
-            rmNpcPtr = *(void**)((char*)refr + 0x40);
-            if (rmNpcPtr) rmNpc = *(uint32_t*)((char*)rmNpcPtr + 0x0C) & 0x00FFFFFFu;
-        } __except(EXCEPTION_EXECUTE_HANDLER) { rmRefr = 0; rmNpc = 0; }
-        if (rmNpc && rmRefr) StormLog::RefMap::SetRefForBase(rmNpc, rmRefr);
-    }
-
     if (refr && !g_armed.load(std::memory_order_relaxed)) {
         uint32_t refrFID = 0;
         uint32_t npcFID  = 0;

@@ -13,6 +13,10 @@ namespace FormIdResolver {
 
     // Returns the FormID of the player's current cell, or 0.
     uint32_t CurrentCellFormId();
+
+    // Fills the player's world position + current cell FormID.
+    // Returns false (and leaves outputs untouched) if the player isn't loaded.
+    bool PlayerWorldPos(float& x, float& y, float& z, uint32_t& cellFid);
 }
 
 } // namespace StormLog

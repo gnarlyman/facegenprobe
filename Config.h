@@ -10,6 +10,8 @@ struct Config {
     int iFlushEveryNEvents;
     // [Detection]
     int iBurstThresholdPerSecond;
+    int iBurstStormThreshold;   // STORM if a single burst's collapsed retry count >= this
+    int iReportIntervalMs;      // periodic console report of all storming NPCs (0=off)
     int iConsoleCooldownMs;
     int iBurstWindowMs;
     int iMaxTrackedNpcs;
