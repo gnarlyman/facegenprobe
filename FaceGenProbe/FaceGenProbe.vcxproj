@@ -32,11 +32,11 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>
-        D:\Modlists\_clones;
-        D:\Modlists\_clones\obse\obse;
-        D:\Modlists\_clones\obse;
-        D:\Modlists\_clones\common;
-        D:\Modlists\_clones\StormLog;
+        ..\..\;
+        ..\..\obse\obse;
+        ..\..\obse;
+        ..\..\common;
+        ..\;
         %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;OBLIVION_VERSION=0x010201A0;OBLIVION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -52,8 +52,8 @@
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalDependencies>
-        D:\Modlists\_clones\common\Release\common.lib;
-        D:\Modlists\_clones\StormLog\Detours\detours.lib;
+        ..\..\common\Release\common.lib;
+        ..\Detours\detours.lib;
         %(AdditionalDependencies)
       </AdditionalDependencies>
       <OptimizeReferences>true</OptimizeReferences>
