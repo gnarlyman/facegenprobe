@@ -1,4 +1,0 @@
-LIBRARY "StormLog"
-EXPORTS
-OBSEPlugin_Query
-OBSEPlugin_Load

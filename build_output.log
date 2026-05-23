@@ -1,9 +1,0 @@
-MSBuild version 17.14.19+164abd434 for .NET Framework
-MSBUILD : error MSB1008: Only one project can be specified.
-    Full command line: '"C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" D:\Modlists\_clones\xOBSE\common\common.vcxproj p:Configuration=Release p:Platform=Win32 M:/ "C:/Program Files/Git/nologo"'
-  Switches appended by response files:
-'' came from 'C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.rsp'
-Switch: p:Configuration=Release
-
-For switch syntax, type "MSBuild -help"
-Build completed at Tue May 19 13:07:29 MDT 2026
