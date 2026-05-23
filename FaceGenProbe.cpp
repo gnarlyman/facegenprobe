@@ -10,7 +10,7 @@
 #include <mutex>
 #include <windows.h>
 
-#pragma comment(lib, "..\\Detours\\detours.lib")
+#pragma comment(lib, "Detours\\detours.lib")
 
 namespace RTLog {
     inline std::mutex& Mtx() { static std::mutex m; return m; }

@@ -32,11 +32,10 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>
-        ..\..\;
-        ..\..\obse\obse;
-        ..\..\obse;
-        ..\..\common;
         ..\;
+        ..\obse\obse;
+        ..\obse;
+        ..\common;
         %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;OBLIVION_VERSION=0x010201A0;OBLIVION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -52,8 +51,8 @@
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalDependencies>
-        ..\..\common\Release\common.lib;
-        ..\Detours\detours.lib;
+        ..\common\Release\common.lib;
+        Detours\detours.lib;
         %(AdditionalDependencies)
       </AdditionalDependencies>
       <OptimizeReferences>true</OptimizeReferences>
