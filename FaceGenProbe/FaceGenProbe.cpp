@@ -182,13 +182,23 @@ static LONG s_cacheCount = 0;
 static CRITICAL_SECTION s_cacheCS;
 static bool s_cacheInited = false;
 
-static bool IsCached(UInt32 formID) {
+// Allow 2 calls through (init + processing), skip from 3rd onward
+static bool ShouldSkip(UInt32 formID) {
     if (!s_cacheInited) { InitializeCriticalSection(&s_cacheCS); s_cacheInited = true; }
+    static LONG s_formCounters[32] = {};
     EnterCriticalSection(&s_cacheCS);
-    for (int i = 0; i < s_cacheCount; i++)
-        if (s_cachedFormIDs[i] == formID) { LeaveCriticalSection(&s_cacheCS); return true; }
-    if (s_cacheCount < 32)
-        s_cachedFormIDs[s_cacheCount++] = formID;
+    for (int i = 0; i < s_cacheCount; i++) {
+        if (s_cachedFormIDs[i] == formID) {
+            LONG n = InterlockedIncrement(&s_formCounters[i]);
+            LeaveCriticalSection(&s_cacheCS);
+            return n > 2;
+        }
+    }
+    if (s_cacheCount < 32) {
+        s_cachedFormIDs[s_cacheCount] = formID;
+        s_formCounters[s_cacheCount] = 1;
+        s_cacheCount++;
+    }
     LeaveCriticalSection(&s_cacheCS);
     return false;
 }
@@ -204,14 +214,15 @@ static void __fastcall Hooked_FUN_0043eb80(void* thisPtr, void* /*edx*/)
                 if ((formID & 0xFF000000) == 0) {
                     void* mount = *(void**)((char*)p150 + 0x1A0);
                     if (mount) {
-                        if (IsCached(formID)) {
+                        if (ShouldSkip(formID)) {
                             LONG n = InterlockedIncrement(&s_43eb80Calls);
                             if (n <= 5 || n % 100 == 0)
                                 RTLog::Write("F43EB80 SKIP formID=%08X (total=%d)", formID, n);
                             return;
                         }
-                        // First call: let it through for FaceGen setup
-                        RTLog::Write("F43EB80 CACHE formID=%08X (first call, allowing)", formID);
+                        // First 2 calls: let through for init + FaceGen setup
+                        if (s_43eb80Calls < 10)
+                            RTLog::Write("F43EB80 ALLOW formID=%08X (call %d)", formID, s_43eb80Calls);
                     }
                 }
             }
