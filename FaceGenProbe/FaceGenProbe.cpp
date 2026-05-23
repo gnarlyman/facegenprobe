@@ -177,10 +177,24 @@ static UInt32 __stdcall Hooked_43b990(UInt32 param_1, UInt32 param_2, UInt32 par
 typedef void (__thiscall *Fn_FUN_0043eb80)(void* thisPtr);
 static Fn_FUN_0043eb80 s_origFUN_0043eb80 = nullptr;
 static LONG s_43eb80Calls = 0;
+static UInt32 s_cachedFormIDs[32] = {};
+static LONG s_cacheCount = 0;
+static CRITICAL_SECTION s_cacheCS;
+static bool s_cacheInited = false;
+
+static bool IsCached(UInt32 formID) {
+    if (!s_cacheInited) { InitializeCriticalSection(&s_cacheCS); s_cacheInited = true; }
+    EnterCriticalSection(&s_cacheCS);
+    for (int i = 0; i < s_cacheCount; i++)
+        if (s_cachedFormIDs[i] == formID) { LeaveCriticalSection(&s_cacheCS); return true; }
+    if (s_cacheCount < 32)
+        s_cachedFormIDs[s_cacheCount++] = formID;
+    LeaveCriticalSection(&s_cacheCS);
+    return false;
+}
 
 static void __fastcall Hooked_FUN_0043eb80(void* thisPtr, void* /*edx*/)
 {
-    // Detect mounted NPC via: in_ECX+0x20 → *(p20+0x150) → TESNPC → +0x1A0
     __try {
         void* p20 = *(void**)((char*)thisPtr + 0x20);
         if (p20) {
@@ -190,10 +204,14 @@ static void __fastcall Hooked_FUN_0043eb80(void* thisPtr, void* /*edx*/)
                 if ((formID & 0xFF000000) == 0) {
                     void* mount = *(void**)((char*)p150 + 0x1A0);
                     if (mount) {
-                        LONG n = InterlockedIncrement(&s_43eb80Calls);
-                        if (n <= 5 || n % 100 == 0)
-                            RTLog::Write("F43EB80 SKIP formID=%08X mount=%08X (total=%d)", formID, (UInt32)mount, n);
-                        return; // SKIP: mounted NPC, no FaceGen processing
+                        if (IsCached(formID)) {
+                            LONG n = InterlockedIncrement(&s_43eb80Calls);
+                            if (n <= 5 || n % 100 == 0)
+                                RTLog::Write("F43EB80 SKIP formID=%08X (total=%d)", formID, n);
+                            return;
+                        }
+                        // First call: let it through for FaceGen setup
+                        RTLog::Write("F43EB80 CACHE formID=%08X (first call, allowing)", formID);
                     }
                 }
             }
