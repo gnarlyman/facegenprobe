@@ -1,7 +1,8 @@
-// Build 33: NOP the Filler call inside HelperPopulator at 0x0052CD8C.
-// Replaces 5-byte "call TESNPC_FaceGenFiller" with NOPs.
-// HelperPopulator still copies NPC data to output buffer — no crash risk.
-// Combined with existing Filler E8 hook and 43b990 hook.
+// Build 39: Clean production build.
+// Three hooks to eliminate FaceGen storm for creature-mounted NPCs:
+//   1. TESNPC_FaceGenFiller (0x005221C0): E8 zero/restore forces default race path
+//   2. FUN_0043b990 (0x0043B990): Skips BSTask creation for creature mounts
+//   3. FUN_0043eb80 (0x0043EB80): 2-call gate — allows init+processing, blocks storm
 
 #include "Detours/detours.h"
 #include <cstdio>
@@ -18,15 +19,12 @@ namespace RTLog {
     inline void Write(const char* fmt, ...) {
         std::lock_guard<std::mutex> lk(Mtx());
         if (!Fp()) return;
-
         time_t t = time(nullptr);
         struct tm tm; localtime_s(&tm, &t);
         fprintf(Fp(), "[%02d:%02d:%02d] ", tm.tm_hour, tm.tm_min, tm.tm_sec);
-
         va_list a; va_start(a, fmt);
         vfprintf(Fp(), fmt, a);
         va_end(a);
-
         fprintf(Fp(), "\n");
         fflush(Fp());
     }
@@ -34,23 +32,18 @@ namespace RTLog {
     inline void Init() {
         std::lock_guard<std::mutex> lk(Mtx());
         if (Fp()) return;
-
         HMODULE hm = nullptr;
         GetModuleHandleExA(
             GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
             reinterpret_cast<LPCSTR>(&Init), &hm);
-
         char dllPath[MAX_PATH] = {};
         if (!GetModuleFileNameA(hm, dllPath, MAX_PATH)) return;
-
         char* sep = nullptr;
         for (char* p = dllPath; *p; ++p) if (*p == '\\' || *p == '/') sep = p;
         if (!sep) return;
         *sep = '\0';
-
         char full[MAX_PATH];
         if (snprintf(full, sizeof(full), "%s\\facegenprobe_realtime.log", dllPath) <= 0) return;
-
         Fp() = _fsopen(full, "w", _SH_DENYWR);
         if (Fp()) {
             fprintf(Fp(), "=== FaceGenProbe real-time log opened (%s) ===\n", full);
@@ -61,27 +54,21 @@ namespace RTLog {
 
 static const UInt32 kAddr_TESNPC_FaceGenFiller = 0x005221c0;
 static const UInt32 kAddr_43b990             = 0x0043b990;
-static const UInt32 kAddr_FillerCallInHelper  = 0x0052CD8C;
-static const UInt32 kAddr_FUN_0043eb80         = 0x0043EB80;
+static const UInt32 kAddr_FUN_0043eb80       = 0x0043EB80;
+static const UInt32 kOblivionBase            = 0x00400000;
 
-// Oblivion.exe image base (needed to compute RVA from return addresses)
-static const UInt32 kOblivionBase = 0x00400000;
+// -- Hook 1: TESNPC_FaceGenFiller (0x005221C0) --
 
 typedef void (__thiscall *Fn_FaceGenFiller)(void* thisPtr, void* param1);
 static Fn_FaceGenFiller s_origFiller = nullptr;
 
-typedef UInt32 (__stdcall *Fn_43b990)(UInt32 param_1, UInt32 param_2, UInt32 param_3, UInt32 param_4, UInt32 mount);
-static Fn_43b990 s_orig43b990 = nullptr;
-
-// Dedup return addresses per formID to avoid log spam
 static UInt32 s_lastRetAddr[64] = {};
 static UInt32 s_lastFormID[64] = {};
 static int s_dedupIdx = 0;
 
 static bool LogDedup(UInt32 formID, UInt32 retAddr) {
-    for (int i = 0; i < s_dedupIdx; i++) {
+    for (int i = 0; i < s_dedupIdx; i++)
         if (s_lastFormID[i] == formID && s_lastRetAddr[i] == retAddr) return true;
-    }
     if (s_dedupIdx < 64) {
         s_lastFormID[s_dedupIdx] = formID;
         s_lastRetAddr[s_dedupIdx] = retAddr;
@@ -92,97 +79,59 @@ static bool LogDedup(UInt32 formID, UInt32 retAddr) {
 
 static void __fastcall Hooked_TESNPC_FaceGenFiller(void* thisPtr, void* /*edx*/, void* param1)
 {
-    if (!thisPtr) {
-        s_origFiller(thisPtr, param1);
-        return;
-    }
+    if (!thisPtr) { s_origFiller(thisPtr, param1); return; }
 
     UInt32 formID = *reinterpret_cast<UInt32*>((char*)thisPtr + 0xC);
-
     if ((formID & 0xFF000000) == 0) {
         void* mount = *(void**)((char*)thisPtr + 0x1A0);
         if (mount) {
             UInt32 retAddr = (UInt32)_ReturnAddress();
-            UInt32 retRVA = retAddr - kOblivionBase;
-
-            if (!LogDedup(formID, retAddr)) {
-                RTLog::Write("[Filler] retAddr=%08X (RVA %08X) formID=%08X mount=%08X",
-                    retAddr, retRVA, formID, (UInt32)mount);
-            }
-
-            // CALLTRACE PROBE: On 6th call for 000700CC, walk EBP chain and log full calltrace
-            if (formID == 0x000700CC) {
-                static LONG s_700CC_count = 0;
-                LONG n = InterlockedIncrement(&s_700CC_count);
-                if (n == 6) {
-                    RTLog::Write("=== CALLTRACE for 000700CC (call #%d) ===", n);
-                    RTLog::Write("  [0] retAddr=%08X (our Filler hook)", retAddr);
-                    DWORD myEsp;
-                    __asm mov myEsp, esp
-                    RTLog::Write("  --- stack scan from esp=%08X ---", myEsp);
-                    int found = 0;
-                    for (DWORD* p = (DWORD*)(myEsp & ~3); found < 12 && (DWORD)p < myEsp + 0x400; p++) {
-                        DWORD val = *p;
-                        if (val >= 0x00400000 && val <= 0x00C05000) {
-                            RTLog::Write("  [stack+%03X] %08X (RVA %08X)",
-                                (DWORD)((DWORD)p - myEsp), val, val - 0x00400000);
-                            found++;
-                        }
-                    }
-                    RTLog::Write("  --- end stack scan ---");
-                    RTLog::Write("=== END CALLTRACE ===");
-                }
-            }
+            if (!LogDedup(formID, retAddr))
+                RTLog::Write("[Filler] retAddr=%08X formID=%08X mount=%08X", retAddr, formID, (UInt32)mount);
 
             UInt32& raceData = *reinterpret_cast<UInt32*>((char*)thisPtr + 0xE8);
-            UInt32 savedRaceData = raceData;
+            UInt32 saved = raceData;
             raceData = 0;
             s_origFiller(thisPtr, param1);
-            raceData = savedRaceData;
+            raceData = saved;
             return;
         }
     }
-
     s_origFiller(thisPtr, param1);
 }
 
-static UInt32 __stdcall Hooked_43b990(UInt32 param_1, UInt32 param_2, UInt32 param_3, UInt32 param_4, UInt32 mount)
+// -- Hook 2: FUN_0043b990 (0x0043B990) --
+
+typedef UInt32 (__stdcall *Fn_43b990)(UInt32 p1, UInt32 p2, UInt32 p3, UInt32 p4, UInt32 mount);
+static Fn_43b990 s_orig43b990 = nullptr;
+
+static UInt32 __stdcall Hooked_43b990(UInt32 p1, UInt32 p2, UInt32 p3, UInt32 p4, UInt32 mount)
 {
     if (mount != 0) {
         __try {
-            UInt32 facegenObj = *reinterpret_cast<UInt32*>(reinterpret_cast<char*>(mount) + 0x1C);
-            if (facegenObj == 0 || facegenObj == 0xFFFFFFFF) {
-                *reinterpret_cast<UInt32*>(param_1) = 0;
-                return param_1;
-            }
-            UInt32 vtbl = *reinterpret_cast<UInt32*>(reinterpret_cast<char*>(facegenObj));
-            UInt32 facegenFn = *reinterpret_cast<UInt32*>(reinterpret_cast<char*>(vtbl) + 0xF4);
-            typedef char (__thiscall *Fn_FaceGenCheck)(void* thisPtr);
-            char result = reinterpret_cast<Fn_FaceGenCheck>(facegenFn)(reinterpret_cast<void*>(facegenObj));
-            if (result == 0) {
-                *reinterpret_cast<UInt32*>(param_1) = 0;
-                return param_1;
-            }
-        } __except(EXCEPTION_EXECUTE_HANDLER) {
-        }
+            UInt32 fgObj = *reinterpret_cast<UInt32*>(reinterpret_cast<char*>(mount) + 0x1C);
+            if (fgObj == 0 || fgObj == 0xFFFFFFFF) { *reinterpret_cast<UInt32*>(p1) = 0; return p1; }
+            UInt32 vtbl = *reinterpret_cast<UInt32*>(reinterpret_cast<char*>(fgObj));
+            UInt32 fn   = *reinterpret_cast<UInt32*>(reinterpret_cast<char*>(vtbl) + 0xF4);
+            typedef char (__thiscall *FnCheck)(void*);
+            if (reinterpret_cast<FnCheck>(fn)(reinterpret_cast<void*>(fgObj)) == 0)
+                { *reinterpret_cast<UInt32*>(p1) = 0; return p1; }
+        } __except(EXCEPTION_EXECUTE_HANDLER) {}
     }
-
-    return s_orig43b990(param_1, param_2, param_3, param_4, mount);
+    return s_orig43b990(p1, p2, p3, p4, mount);
 }
 
-// FUN_0043eb80 at 0x0043EB80: QueuedHelmet FaceGen processor, thiscall.
-// Calls Filler directly + dispatches to ChokepointAlloc chain via sub_436F30.
-// Diagnostic: probe in_ECX offsets to find NPC link.
+// -- Hook 3: FUN_0043eb80 (0x0043EB80) — 2-call gate --
 
 typedef void (__thiscall *Fn_FUN_0043eb80)(void* thisPtr);
 static Fn_FUN_0043eb80 s_origFUN_0043eb80 = nullptr;
-static LONG s_43eb80Calls = 0;
+static LONG s_skipCount = 0;
+
 static UInt32 s_cachedFormIDs[32] = {};
 static LONG s_cacheCount = 0;
 static CRITICAL_SECTION s_cacheCS;
 static bool s_cacheInited = false;
 
-// Allow 2 calls through (init + processing), skip from 3rd onward
 static bool ShouldSkip(UInt32 formID) {
     if (!s_cacheInited) { InitializeCriticalSection(&s_cacheCS); s_cacheInited = true; }
     static LONG s_formCounters[32] = {};
@@ -215,14 +164,11 @@ static void __fastcall Hooked_FUN_0043eb80(void* thisPtr, void* /*edx*/)
                     void* mount = *(void**)((char*)p150 + 0x1A0);
                     if (mount) {
                         if (ShouldSkip(formID)) {
-                            LONG n = InterlockedIncrement(&s_43eb80Calls);
+                            LONG n = InterlockedIncrement(&s_skipCount);
                             if (n <= 5 || n % 100 == 0)
-                                RTLog::Write("F43EB80 SKIP formID=%08X (total=%d)", formID, n);
+                                RTLog::Write("[Skip] formID=%08X (total=%d)", formID, n);
                             return;
                         }
-                        // First 2 calls: let through for init + FaceGen setup
-                        if (s_43eb80Calls < 10)
-                            RTLog::Write("F43EB80 ALLOW formID=%08X (call %d)", formID, s_43eb80Calls);
                     }
                 }
             }
@@ -232,10 +178,12 @@ static void __fastcall Hooked_FUN_0043eb80(void* thisPtr, void* /*edx*/)
     s_origFUN_0043eb80(thisPtr);
 }
 
+// -- Install --
+
 bool InstallFaceGenHooks()
 {
     RTLog::Init();
-    RTLog::Write("[INIT] InstallFaceGenHooks() entered");
+    RTLog::Write("[INIT] FaceGenProbe Build 39");
 
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
@@ -256,9 +204,9 @@ bool InstallFaceGenHooks()
     }
 
     _MESSAGE("FaceGenProbe initialized");
-    _MESSAGE("  TESNPC_FaceGenFiller @ %08X (E8 zero/restore + caller logging)", kAddr_TESNPC_FaceGenFiller);
+    _MESSAGE("  TESNPC_FaceGenFiller @ %08X (E8 zero/restore)", kAddr_TESNPC_FaceGenFiller);
     _MESSAGE("  FUN_0043b990 @ %08X (creature mount redirect)", kAddr_43b990);
-    RTLog::Write("[INIT] FaceGenProbe Build 35 (Filler + 43b990 + 43EB80 diagnostic)");
+    _MESSAGE("  FUN_0043eb80 @ %08X (2-call gate for mounted NPCs)", kAddr_FUN_0043eb80);
 
     return true;
 }
